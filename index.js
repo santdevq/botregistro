@@ -90,6 +90,25 @@ client.once(Events.ClientReady, () => {
   console.log(`✅ ${client.user.tag} online`);
 });
 
+const { REST, Routes } = require('discord.js');
+
+client.once(Events.ClientReady, async () => {
+  console.log(`✅ ${client.user.tag} online`);
+
+  // Registra o comando /painel automaticamente ao ligar
+  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+  try {
+    console.log('🔄 Atualizando comandos / (slash)...');
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID), // Puxa o Client ID do Railway
+      { body: [{ name: 'painel', description: 'Envia o painel de registro policial.' }] }
+    );
+    console.log('✅ Comandos / registrados com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao registrar comandos:', error);
+  }
+});
+
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
     // COMANDO /PAINEL
