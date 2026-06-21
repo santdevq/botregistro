@@ -8,7 +8,6 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder,
   EmbedBuilder,
   REST,
   Routes
@@ -79,20 +78,9 @@ function salvarRegistros() {
   );
 }
 
-const PATENTES_MILITARES = [
-  "Coronel", "Tenente-Coronel", "Major", "Capitão", "1º Tenente", "2º Tenente",
-  "Aspirante", "Subtenente", "1º Sargento", "2º Sargento", "3º Sargento",
-  "Cabo", "Soldado", "Al Soldado"
-];
-
-const PATENTES_PF = [
-  "Del.G", "Delg.", "Esc.", "Insp.", "Agnt 1º Clss", "Agnt 2º Clss", "Agnt 3º Clss", "Aluno"
-];
-
 client.once(Events.ClientReady, async () => {
   console.log(`✅ ${client.user.tag} online`);
 
-  // Registra o comando /painel instantaneamente no seu servidor
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
     console.log('🔄 Atualizando comandos / (slash) no servidor...');
@@ -126,7 +114,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
     }
 
-    // ABRIR MODAL
+    // ABRIR O PAINELZINHO (MODAL) COM ATÉ 5 CAMPOS (MÁXIMO PERMITIDO PELO DISCORD)
     if (interaction.isButton() && interaction.customId === 'abrir_registro') {
       const modal = new ModalBuilder()
         .setCustomId('modal_registro')
@@ -134,120 +122,79 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('RG').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('rg').setLabel('RG').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('autorizacao').setLabel('Autorização').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('unidade_txt').setLabel('Unidade (Ex: PMERJ, BOPE, PF)').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('patente_txt').setLabel('Patente (Ex: Soldado, Coronel)').setStyle(TextInputStyle.Short).setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short).setRequired(true)
         )
       );
 
       return interaction.showModal(modal);
     }
 
-    // SUBMETEU MODAL
+    // QUANDO CLICA EM ENVIAR NO PAINELZINHO
     if (interaction.isModalSubmit() && interaction.customId === 'modal_registro') {
+      const nome = interaction.fields.getTextInputValue('nome');
+      const rg = interaction.fields.getTextInputValue('rg');
+      const codigo = interaction.fields.getTextInputValue('codigo');
+      
+      // Padroniza o texto digitado pelo usuário para bater com a sua lista (Tira espaços extras e deixa em maiúsculo/correto)
+      const unidadeInput = interaction.fields.getTextInputValue('unidade_txt').trim().toUpperCase();
+      let patenteInput = interaction.fields.getTextInputValue('patente_txt').trim();
+      
+      // Pequeno ajuste para achar a patente certa mesmo se digitarem tudo minúsculo
+      const patenteChave = Object.keys(PATENTES).find(p => p.toLowerCase() === patenteInput.toLowerCase());
+      const patenteFormatada = patenteChave || patenteInput;
+
+      // Valida se a unidade digitada existe no sistema
+      if (!UNIDADES[unidadeInput]) {
+        return interaction.reply({ content: `❌ A unidade **${unidadeInput}** não existe no sistema. Use uma destas: ${Object.keys(UNIDADES).join(', ')}.`, ephemeral: true });
+      }
+
+      // Valida se a patente digitada existe no sistema
+      if (!PATENTES[patenteFormatated = patenteFormatada]) {
+        return interaction.reply({ content: `❌ A patente **${patenteInput}** não foi reconhecida no sistema. Verifique a grafia correta.`, ephemeral: true });
+      }
+
+      // Valida o código da corporação
+      if (codigo !== UNIDADES[unidadeInput].codigo) {
+        return interaction.reply({ content: '❌ Código de Incorporação incorreto para esta unidade.', ephemeral: true });
+      }
+
+      // Salva provisoriamente no Banco de dados JSON
       registros.set(interaction.user.id, {
-        nome: interaction.fields.getTextInputValue('nome'),
-        rg: interaction.fields.getTextInputValue('rg'),
-        autorizacao: interaction.fields.getTextInputValue('autorizacao'),
-        codigo: interaction.fields.getTextInputValue('codigo')
+        nome: nome,
+        rg: rg,
+        unidade: unidadeInput,
+        patente: patenteFormatada,
+        codigo: codigo
       });
-
       salvarRegistros();
 
-      const unidadeMenu = new StringSelectMenuBuilder()
-        .setCustomId('selecionar_unidade')
-        .setPlaceholder('Escolha a unidade')
-        .addOptions(
-          Object.keys(UNIDADES).map(u => ({ label: u, value: u }))
-        );
-
-      return interaction.reply({
-        content: 'Selecione sua unidade.',
-        ephemeral: true,
-        components: [new ActionRowBuilder().addComponents(unidadeMenu)]
-      });
-    }
-
-    // SELECIONOU UNIDADE
-    if (interaction.isStringSelectMenu() && interaction.customId === 'selecionar_unidade') {
-      const unidade = interaction.values[0];
-      const dados = registros.get(interaction.user.id);
-
-      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
-
-      dados.unidade = unidade;
-      salvarRegistros();
-
-      const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_PF : PATENTES_MILITARES;
-
-      const menuPatente = new StringSelectMenuBuilder()
-        .setCustomId('selecionar_patente')
-        .setPlaceholder('Escolha a patente')
-        .addOptions(
-          lista.map(p => ({ label: p, value: p }))
-        );
-
-      return interaction.update({
-        content: `Unidade: ${unidade}`,
-        components: [new ActionRowBuilder().addComponents(menuPatente)]
-      });
-    }
-
-    // SELECIONOU PATENTE
-    if (interaction.isStringSelectMenu() && interaction.customId === 'selecionar_patente') {
-      const patente = interaction.values[0];
-      const dados = registros.get(interaction.user.id);
-
-      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
-
-      dados.patente = patente;
-      salvarRegistros();
-
-      return interaction.update({
-        content: `Unidade: ${dados.unidade}\nPatente: ${patente}`,
-        components: [
-          new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId('confirmar_registro')
-              .setLabel('Enviar Registro')
-              .setStyle(ButtonStyle.Success)
-          )
-        ]
-      });
-    }
-
-    // CONFIRMAR E ENVIAR PARA APROVAÇÃO
-    if (interaction.isButton() && interaction.customId === 'confirmar_registro') {
-      const dados = registros.get(interaction.user.id);
-
-      if (!dados) {
-        return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
-      }
-
-      if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
-        return interaction.reply({ content: '❌ Código inválido.', ephemeral: true });
-      }
-
-      const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canal) {
+      // Envia direto para o canal de aprovação da Staff
+      const canalAprovacao = interaction.guild.channels.cache.get(CANAL_APROVACAO);
+      if (!canalAprovacao) {
         return interaction.reply({ content: 'Canal de aprovação não encontrado.', ephemeral: true });
       }
 
       const embed = new EmbedBuilder()
         .setTitle('📋 Novo Registro')
+        .setColor('Blue')
         .addFields(
-          { name: 'Nome', value: dados.nome },
-          { name: 'RG', value: dados.rg },
-          { name: 'Autorização', value: dados.autorizacao },
-          { name: 'Unidade', value: dados.unidade },
-          { name: 'Patente', value: dados.patente }
+          { name: 'Usuário', value: `<@${interaction.user.id}>` },
+          { name: 'Nome', value: nome },
+          { name: 'RG', value: rg },
+          { name: 'Unidade', value: unidadeInput },
+          { name: 'Patente', value: patenteFormatada }
         );
 
       const row = new ActionRowBuilder().addComponents(
@@ -255,9 +202,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         new ButtonBuilder().setCustomId(`negar_${interaction.user.id}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
       );
 
-      await canal.send({ embeds: [embed], components: [row] });
+      await canalAprovacao.send({ embeds: [embed], components: [row] });
 
-      return interaction.update({ content: '✅ Enviado para análise.', components: [] });
+      return interaction.reply({ content: '✅ Seu registro foi enviado diretamente para a análise da Staff!', ephemeral: true });
     }
 
     // BOTÃO DE APROVAR
