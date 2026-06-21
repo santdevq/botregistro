@@ -165,7 +165,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       salvarRegistros();
 
-      // 🔥 LÓGICA CORRIGIDA AQUI: Converte strings numéricas em objetos de emoji aceitáveis pelo Discord
       const unidadeMenu = new StringSelectMenuBuilder()
         .setCustomId('selecionar_unidade')
         .setPlaceholder('Escolha a sua Unidade Atendida...')
@@ -175,7 +174,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
             const emojiOriginal = UNIDADES[u].emoji;
 
             if (emojiOriginal) {
-              // Se tiver apenas números, o código entende que é um ID de emoji customizado
               if (/^\d+$/.test(emojiOriginal)) {
                 opcao.emoji = { id: emojiOriginal };
               } else {
@@ -205,7 +203,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_PF : PATENTES_MILITARES;
 
-      // 🔥 LÓGICA CORRIGIDA AQUI: Tratamento idêntico para a lista dinâmica de patentes
       const menuPatente = new StringSelectMenuBuilder()
         .setCustomId('selecionar_patente')
         .setPlaceholder('Escolha a sua Patente/Cargo...')
@@ -268,7 +265,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canal) return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', flags: [MessageFlags.Ephemeral] });
+      if (!canal) return interaction.reply({ content: '❌ Canal administrative de aprovação não foi encontrado.', flags: [MessageFlags.Ephemeral] });
 
       const embed = new EmbedBuilder()
         .setTitle('⏳ AGUARDANDO APROVAÇÃO')
@@ -305,8 +302,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!dados) return interaction.reply({ content: '❌ Dados cadastrais limpos do cache ou inválidos.', flags: [MessageFlags.Ephemeral] });
 
-      let erroGerenciamento = false;
-
       try {
         const membro = await interaction.guild.members.fetch(userId);
         if (UNIDADES[dados.unidade]?.cargo) await membro.roles.add(UNIDADES[dados.unidade].cargo);
@@ -315,8 +310,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
         await membro.setNickname(nick);
       } catch (err) {
-        console.error(err.message);
-        erroGerenciamento = true;
+        console.error("Erro ao aplicar cargos ou apelido:", err.message);
       }
 
       const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
@@ -342,4 +336,40 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     // BOTÃO DE NEGAR
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
-      if (!interaction.member.roles
+      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
+        return interaction.reply({ content: '❌ Você não tem autorização para recusar este registro.', flags: [MessageFlags.Ephemeral] });
+      }
+
+      const userId = interaction.customId.split('_')[1];
+      const dados = registros.get(userId);
+
+      const canalRecusados = interaction.guild.channels.cache.get(CANAL_RECUSADOS);
+      if (canalRecusados && dados) {
+        const embedRecusado = new EmbedBuilder()
+          .setTitle('❌ SOLICITAÇÃO RECUSADA')
+          .setColor('#ef4444')
+          .setDescription(`A ficha de incorporação enviada não atende aos parâmetros exigidos.`)
+          .addFields(
+            { name: '👤 Candidato reprovado:', value: `<@${userId}>` },
+            { name: '🪪 Nome enviado:', value: dados.nome, inline: true },
+            { name: '📜 RG informado:', value: `\`${dados.rg}\``, inline: true }
+          )
+          .setTimestamp();
+
+        await canalRecusados.send({ embeds: [embedRecusado] });
+      }
+
+      registros.delete(userId);
+      salvarRegistros();
+      return interaction.update({ content: `❌ O registro de <@${userId}> foi **recusado**.`, components: [] });
+    }
+
+  } catch (error) {
+    console.error("Erro na execução da interação:", error);
+  }
+});
+
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
+
+client.login(process.env.TOKEN);
