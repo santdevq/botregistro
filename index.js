@@ -23,7 +23,7 @@ const client = new Client({
   ]
 });
 
-// ⚠️ NÃO ESQUEÇA DE COLOCAR O ID DO SEU BOT AQUI
+// ⚠️ COLOQUE O ID DO SEU BOT AQUI (ESSENCIAL PARA VIRAR APP)
 const CLIENT_ID = '1518042580741390437'; 
 
 const ID_DO_SERVIDOR = '1518042580741390437';
@@ -83,18 +83,18 @@ function salvarRegistros() {
 }
 
 client.once(Events.ClientReady, async () => {
-  console.log(`✅ ${client.user.tag} rodando com suporte a componentes de App.`);
+  console.log(`✅ ${client.user.tag} online montando escopo de App.`);
 
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
-    // Registro global preparado para interações em janelas flutuantes nativas
+    // Forçando o comando a ser registrado com os novos tipos de integração de UI integrada do Discord
     await rest.put(
       Routes.applicationCommands(CLIENT_ID),
       {
         body: [
           {
             name: 'painel',
-            description: 'Envia o painel com suporte a menus suspensos nativos.',
+            description: 'Abre o formulário de liberação corporativa.',
             type: ApplicationCommandType.ChatInput,
             integration_types: [0, 1], 
             contexts: [0, 1, 2]        
@@ -102,9 +102,9 @@ client.once(Events.ClientReady, async () => {
         ]
       }
     );
-    console.log('✅ Comando com suporte a Dropdown de App registrado com sucesso!');
+    console.log('✅ Modo de comando integrado injetado globalmente!');
   } catch (error) {
-    console.error('❌ Erro ao registrar comando avançado:', error);
+    console.error('Erro no registro global:', error);
   }
 });
 
@@ -125,7 +125,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply({ embeds: [embed], components: [row] });
     }
 
-    // PASSO 1: Abre a janela coletando os textos obrigatórios primários
+    // ETAPA 1: O Bot abre a tela flutuante de coleta textual
     if (interaction.isButton() && interaction.customId === 'abrir_registro_app') {
       const modal = new ModalBuilder()
         .setCustomId('modal_etapa_1')
@@ -133,106 +133,76 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Qual o nome e sobrenome do personagem? *').setPlaceholder('ex: Freezy Andre').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('rg').setLabel('Qual é o seu ID na cidade? *').setPlaceholder('Lembrando que são no máximo 8 números, ex: 2').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('Qual é o seu ID na cidade? *').setPlaceholder('Lembrando que são no máximo 8 números').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('nome').setLabel('Qual é o nome e sobrenome do seu personagem? *').setPlaceholder('ex: Freezy Andre').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('codigo').setLabel('Qual o Código de Incorporação? *').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('recrutador').setLabel('Qual o QRA do seu recrutador? *').setPlaceholder('ex: Freezy Andre | 0000').setStyle(TextInputStyle.Short).setRequired(true)
         )
       );
 
       return interaction.showModal(modal);
     }
 
-    // PASSO 2: Assim que ele envia o modal, o App atualiza a janela transformando instantaneamente nas SETINHAS (Dropdown)
+    // ETAPA 2: Forçando a transição imediata para o menu de setinha (Dropdown)
     if (interaction.isModalSubmit() && interaction.customId === 'modal_etapa_1') {
       const userId = interaction.user.id;
       
       registros.set(userId, {
-        nome: interaction.fields.getTextInputValue('nome'),
         rg: interaction.fields.getTextInputValue('rg'),
-        codigo: interaction.fields.getTextInputValue('codigo'),
-        unidade: null,
+        nome: interaction.fields.getTextInputValue('nome'),
+        recrutador: interaction.fields.getTextInputValue('recrutador'),
+        unidade: "PMERJ", // Define PMERJ como padrão para carregar as patentes militares
         patente: null
       });
       salvarRegistros();
 
-      // Cria a "setinha" para selecionar a Unidade
-      const menuUnidade = new StringSelectMenuBuilder()
-        .setCustomId(`app_select_unidade_${userId}`)
-        .setPlaceholder('Selecione sua unidade ▼')
-        .addOptions(
-          Object.keys(UNIDADES).map(u => ({ label: u, value: u }))
-        );
+      // Gerando a lista de patentes militares para a setinha (Igual ao seu print)
+      const menuPatente = new StringSelectMenuBuilder()
+        .setCustomId(`app_select_patente_${userId}`)
+        .setPlaceholder('Selecione sua patente')
+        .addOptions([
+          { label: 'Aluno', value: 'Aluno' },
+          { label: 'Soldado', value: 'Soldado' },
+          { label: 'Cabo', value: 'Cabo' },
+          { label: '3º Sargento', value: '3º Sargento' },
+          { label: '2º Sargento', value: '2º Sargento' },
+          { label: '1º Sargento', value: '1º Sargento' }
+        ]);
 
-      // Manda a tela com o menu de setinha nativo de forma privada (ephemeral)
+      // Responde com o dropdown nativo da API de forma privada e instantânea
       return interaction.reply({
-        content: '➡️ **Etapa Final:** Use a setinha abaixo para definir sua corporação:',
-        components: [new ActionRowBuilder().addComponents(menuUnidade)],
+        content: '⬇️ **Selecione abaixo a sua Patente para finalizar o envio:**',
+        components: [new ActionRowBuilder().addComponents(menuPatente)],
         ephemeral: true
       });
     }
 
-    // PASSO 3: O usuário escolheu a Unidade na setinha -> Muda o dropdown para as Patentes
-    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('app_select_unidade_')) {
-      const userId = interaction.customId.split('_')[3];
-      const unidadeSelecionada = interaction.values[0];
-      
-      const dados = registros.get(userId);
-      if (!dados) return interaction.reply({ content: 'Sessão expirada. Tente novamente.', ephemeral: true });
-
-      dados.unidade = unidadeSelecionada;
-      salvarRegistros();
-
-      // Filtra patentes baseado na escolha
-      const listaPatentes = (unidadeSelecionada === 'PF' || unidadeSelecionada === 'PRF') 
-        ? ["Del.G", "Delg.", "Esc.", "Insp.", "Agnt 1º Clss", "Agnt 2º Clss", "Aluno"]
-        : ["Coronel", "Tenente-Coronel", "Major", "Capitão", "1º Tenente", "Subtenente", "1º Sargento", "Cabo", "Soldado", "Aluno"];
-
-      // Cria a segunda "setinha" dinamicamente baseada na unidade dele
-      const menuPatente = new StringSelectMenuBuilder()
-        .setCustomId(`app_select_patente_${userId}`)
-        .setPlaceholder('Selecione sua patente ▼')
-        .addOptions(
-          listaPatentes.map(p => ({ label: p, value: p }))
-        );
-
-      return interaction.update({
-        content: `Unidade definida: **${unidadeSelecionada}**\nAgora escolha a sua patente na lista abaixo:`,
-        components: [new ActionRowBuilder().addComponents(menuPatente)]
-      });
-    }
-
-    // PASSO 4: Escolheu a patente na setinha -> Valida o código e manda para a aprovação dos Oficiais
+    // ETAPA 3: Pegou o clique da setinha e despacha tudo direto para a Staff analisar
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith('app_select_patente_')) {
       const userId = interaction.customId.split('_')[3];
       const patenteSelecionada = interaction.values[0];
 
       const dados = registros.get(userId);
-      if (!dados) return interaction.reply({ content: 'Erro nos dados.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: 'Sessão perdida, execute o comando de novo.', ephemeral: true });
 
       dados.patente = patenteSelecionada;
       salvarRegistros();
 
-      // Validação automática do código de segurança da corporação escolhida
-      if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
-        return interaction.update({ content: '❌ **Envio cancelado:** Seu Código de Incorporação não bate com essa Unidade!', components: [] });
-      }
-
       const canalAprovacao = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canalAprovacao) return interaction.reply({ content: 'Canal de Staff ausente.', ephemeral: true });
+      if (!canalAprovacao) return interaction.reply({ content: 'Canal de Staff não configurado.', ephemeral: true });
 
       const embed = new EmbedBuilder()
-        .setTitle('📋 Nova Solicitação (Menu de Setinhas)')
-        .setColor('DarkBlue')
+        .setTitle('📋 Nova Solicitação de Liberação')
+        .setColor('Blue')
         .addFields(
-          { name: 'Policial', value: `<@${userId}>` },
-          { name: 'Nome de Guerra', value: dados.nome },
-          { name: 'ID / RG', value: dados.rg },
-          { name: 'Unidade Escolhida', value: dados.unidade },
-          { name: 'Patente Selecionada', value: dados.patente }
+          { name: 'Membro', value: `<@${userId}>` },
+          { name: 'ID na Cidade', value: dados.rg },
+          { name: 'Nome do Personagem', value: dados.nome },
+          { name: 'QRA do Recrutador', value: dados.recrutador },
+          { name: 'Patente Escolhida', value: dados.patente }
         );
 
       const row = new ActionRowBuilder().addComponents(
@@ -242,18 +212,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await canalAprovacao.send({ embeds: [embed], components: [row] });
 
-      return interaction.update({ content: '✅ **Perfeito!** Seus dados foram coletados através das opções selecionadas e enviados para a DPMH!', components: [] });
+      return interaction.update({ content: '✅ **Formulário enviado com sucesso!** Seus dados e sua patente foram registrados e enviados para a DPMH.', components: [] });
     }
 
-    // SISTEMA DE APROVAÇÃO DA STAFF (Mantido idêntico para segurança e logs)
+    // CONTROLE DE BOTOES DA STAFF (Aprovar / Negar)
     if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
+        return interaction.reply({ content: '❌ Você não tem permissão para aprovar.', ephemeral: true });
       }
 
       const userId = interaction.customId.split('_')[1];
       const dados = registros.get(userId);
-      if (!dados) return interaction.reply({ content: 'Dados inválidos.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: 'Erro ao resgatar dados.', ephemeral: true });
 
       try {
         const membro = await interaction.guild.members.fetch(userId);
@@ -262,12 +232,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
         await membro.setNickname(nick);
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error("Erro ao aplicar dados:", err); }
 
       const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
       if (canalAprovados) {
         await canalAprovados.send({
-          embeds: [new EmbedBuilder().setColor('Green').setTitle('✅ Cadastro Aprovado via App').setDescription(`O policial <@${userId}> teve seus cargos e prefixos aplicados.`)]
+          embeds: [new EmbedBuilder().setColor('Green').setTitle('✅ Liberação Concluída').setDescription(`O policial <@${userId}> foi aprovado e integrado no sistema.`)]
         });
       }
       return interaction.update({ content: `✅ Liberado por ${interaction.user}.`, components: [] });
@@ -280,11 +250,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       registros.delete(userId);
       salvarRegistros();
 
-      return interaction.update({ content: `❌ Recusado por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `❌ Registro de <@${userId}> recusado por ${interaction.user}.`, components: [] });
     }
 
   } catch (error) {
-    console.error("Erro interno na execução do App:", error);
+    console.error("Erro na execução geral:", error);
   }
 });
 
