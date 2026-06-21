@@ -248,7 +248,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setCustomId('confirmar_registro')
               .setLabel('Enviar Ficha para Análise')
               .setStyle(ButtonStyle.Success)
-              .setEmoji('🚀')
+              .setEmoji('✅')
           )
         ]
       });
