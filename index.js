@@ -36,7 +36,7 @@ const UNIDADES = {
   CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844', emoji: '🚒' },
   BOPE: { codigo: 'BOPEBS38457', cargo: '1472933428835123342', emoji: '💀' },
   RECOM: { codigo: 'RECOMBS23745', cargo: '1472933947074941101', emoji: '⚡' },
-  BPCHQ: { codigo: 'CHOQUEBS37238', cargo: '1472933561513283666', emoji: ':bpchq:' },
+  BPCHQ: { codigo: 'CHOQUEBS37238', cargo: '1472933561513283666', emoji: '1518077131559534726' },
   PF: { codigo: 'PFBS37284', cargo: '1472933271137423394', emoji: '🦅' },
   PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889', emoji: '🚔' },
   PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035', emoji: '👮' }
