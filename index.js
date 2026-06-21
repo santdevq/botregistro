@@ -11,7 +11,8 @@ const {
   StringSelectMenuBuilder,
   EmbedBuilder,
   REST,
-  Routes
+  Routes,
+  MessageFlags
 } = require('discord.js');
 const fs = require('fs');
 
@@ -101,7 +102,7 @@ client.once(Events.ClientReady, async () => {
     );
     console.log('✅ Comandos / registrados com sucesso no servidor!');
   } catch (error) {
-    console.error('❌ Erro ao registrar comandos:', error);
+    console.error('❌ Erro ao registrar comandos (Verifique permissões e ID do Token):', error.message);
   }
 });
 
@@ -110,6 +111,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // COMANDO /PAINEL
     if (interaction.isChatInputCommand()) {
       if (interaction.commandName === 'painel') {
+        // Bloqueia usuários comuns de usarem o comando
+        if (!interaction.member.roles.cache.has(CARGO_APROVADOR) && !interaction.member.permissions.has('Administrator')) {
+          return interaction.reply({
+            content: '❌ **Acesso Negado!** Apenas Oficiais e membros da Staff autorizados podem acionar o painel de registro.',
+            flags: [MessageFlags.Ephemeral]
+          });
+        }
+
         const embed = new EmbedBuilder()
           .setTitle('🛡️ SISTEMA DE INCORPORAÇÃO POLICIAL')
           .setDescription(`Seja bem-vindo ao departamento de cadastros.\n\nPara iniciar sua solicitação de incorporação e atualizar seus dados na corporação, clique no botão **Iniciar Registro** logo abaixo.`)
@@ -174,7 +183,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       return interaction.reply({
         content: '↳ **Etapa 2/3:** Selecione a sua corporação/unidade abaixo:',
-        ephemeral: true,
+        flags: [MessageFlags.Ephemeral],
         components: [new ActionRowBuilder().addComponents(unidadeMenu)]
       });
     }
@@ -184,7 +193,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const unidade = interaction.values[0];
       const dados = registros.get(interaction.user.id);
 
-      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', flags: [MessageFlags.Ephemeral] });
 
       dados.unidade = unidade;
       salvarRegistros();
@@ -209,7 +218,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const patente = interaction.values[0];
       const dados = registros.get(interaction.user.id);
 
-      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', flags: [MessageFlags.Ephemeral] });
 
       dados.patente = patente;
       salvarRegistros();
@@ -233,16 +242,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const dados = registros.get(interaction.user.id);
 
       if (!dados) {
-        return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados.', ephemeral: true });
+        return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados.', flags: [MessageFlags.Ephemeral] });
       }
 
       if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
-        return interaction.reply({ content: '❌ **Código de Incorporação Inválido!** O código digitado não confere com a unidade selecionada.', ephemeral: true });
+        return interaction.reply({ content: '❌ **Código de Incorporação Inválido!** O código digitado não confere com a unidade selecionada.', flags: [MessageFlags.Ephemeral] });
       }
 
       const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
       if (!canal) {
-        return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', ephemeral: true });
+        return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', flags: [MessageFlags.Ephemeral] });
       }
 
       const embed = new EmbedBuilder()
@@ -274,13 +283,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // BOTÃO DE APROVAR
     if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para validar este registro.', ephemeral: true });
+        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para validar este registro.', flags: [MessageFlags.Ephemeral] });
       }
 
       const userId = interaction.customId.split('_')[1];
       const dados = registros.get(userId);
 
-      if (!dados) return interaction.reply({ content: '❌ Dados cadastrais limpos do cache ou inválidos.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Dados cadastrais limpos do cache ou inválidos.', flags: [MessageFlags.Ephemeral] });
+
+      let erroGerenciamento = false;
 
       try {
         const membro = await interaction.guild.members.fetch(userId);
@@ -291,7 +302,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
         await membro.setNickname(nick);
       } catch (err) {
-        console.error("Erro ao gerenciar cargos/nickname do usuário:", err);
+        console.error("Erro ao gerenciar cargos/nickname do usuário:", err.message);
+        erroGerenciamento = true;
       }
 
       const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
@@ -299,7 +311,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const embedAprovado = new EmbedBuilder()
           .setTitle('✅ CORPORAÇÃO ATUALIZADA - INCORPORADO')
           .setColor('#22c55e')
-          .setDescription(`O cidadão cumpriu os pré-requisitos solicitados e agora faz parte oficialmente do departamento militar.`)
+          .setDescription(`O cidadão cumpriu os pré-requisitos solicitados e agora faz parte oficialmente do departamento militar.${erroGerenciamento ? '\n\n⚠️ *Nota: O bot não conseguiu gerenciar os cargos ou apelido deste usuário devido à hierarquia do Discord.*' : ''}`)
           .addFields(
             { name: '👤 Operador:', value: `<@${userId}>` },
             { name: '🪪 Identidade (RG):', value: `\`${dados.rg}\``, inline: true },
@@ -313,13 +325,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await canalAprovados.send({ embeds: [embedAprovado] });
       }
 
-      return interaction.update({ content: `✅ O registro de <@${userId}> foi **aprovado** com sucesso por ${interaction.user}. Cargos e prefixo aplicados.`, components: [] });
+      return interaction.update({ 
+        content: `✅ O registro de <@${userId}> foi **aprovado** por ${interaction.user}.${erroGerenciamento ? ' (Os cargos/apelido precisam ser colocados manualmente por falta de permissão hierárquica do bot).' : ' Cargos e prefixo aplicados com sucesso!'}`, 
+        components: [] 
+      });
     }
 
     // BOTÃO DE NEGAR
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para recusar este registro.', ephemeral: true });
+        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para recusar este registro.', flags: [MessageFlags.Ephemeral] });
       }
 
       const userId = interaction.customId.split('_')[1];
