@@ -181,11 +181,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
 
-      // VALIDAÇÃO ANTECIPADA: Bloqueia na hora se o código de incorporação estiver incorreto para a unidade
-      if (dados.codigo !== UNIDADES[unidade].codigo) {
-        return interaction.update({ content: '❌ **Envio cancelado:** Seu Código de Incorporação está incorreto para esta corporação!', components: [] });
-      }
-
       dados.unidade = unidade;
       salvarRegistros();
 
@@ -233,6 +228,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (!dados) {
         return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+      }
+
+      if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
+        return interaction.reply({ content: '❌ Código inválido.', ephemeral: true });
       }
 
       const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
