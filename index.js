@@ -30,40 +30,42 @@ const CANAL_RECUSADOS = '1518038002939461785';
 
 const CARGO_APROVADOR = '1518037419339812955';
 
+
 const UNIDADES = {
-  GAM: { codigo: 'GAMBS53453', cargo: '1474254662583451709' },
-  CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844' },
-  BOPE: { codigo: 'BOPEBS38457', cargo: '1472933428835123342' },
-  RECOM: { codigo: 'RECOMBS23745', cargo: '1472933947074941101' },
-  BPCHQ: { codigo: 'CHOQUEBS37238', cargo: '1472933561513283666' },
-  PF: { codigo: 'PFBS37284', cargo: '1472933271137423394' },
-  PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889' },
-  PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035' }
+  GAM: { codigo: 'GAMBS53453', cargo: '1474254662583451709', emoji: '🚁' },
+  CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844', emoji: '🚒' },
+  BOPE: { codigo: 'BOPEBS38457', cargo: '1472933428835123342', emoji: '💀' },
+  RECOM: { codigo: 'RECOMBS23745', cargo: '1472933947074941101', emoji: '⚡' },
+  BPCHQ: { codigo: 'CHOQUEBS37238', cargo: '1472933561513283666', emoji: ':bpchq:' },
+  PF: { codigo: 'PFBS37284', cargo: '1472933271137423394', emoji: '🦅' },
+  PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889', emoji: '🚔' },
+  PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035', emoji: '👮' }
 };
 
+
 const PATENTES = {
-  "Coronel": { cargo: "1474226455729668156", prefixo: "[✵ ✵ ✵]" },
-  "Tenente-Coronel": { cargo: "1474226912934232239", prefixo: "[✵ ✵ ✧]" },
-  "Major": { cargo: "1512085315177807882", prefixo: "[✷✧✧]" },
-  "Capitão": { cargo: "1474228200694616176", prefixo: "[✧ ✧ ✧]" },
-  "1º Tenente": { cargo: "1474228316100886702", prefixo: "[✧ ✧]" },
-  "2º Tenente": { cargo: "1474228418420670596", prefixo: "[✧]" },
-  "Aspirante": { cargo: "1474228707173601330", prefixo: "[✯]" },
-  "Subtenente": { cargo: "1474229761550061629", prefixo: "[▵]" },
-  "1º Sargento": { cargo: "1474230092631642215", prefixo: "[❯❯❯ ❯❯]" },
-  "2º Sargento": { cargo: "1474230277957222420", prefixo: "[❯❯❯ ❯]" },
-  "3º Sargento": { cargo: "1474230429350363166", prefixo: "[❯❯❯]" },
-  "Cabo": { cargo: "1474230554453872680", prefixo: "[❯❯]" },
-  "Soldado": { cargo: "1474230626231259207", prefixo: "[❯]" },
-  "Al Soldado": { cargo: "1474230926836895876", prefixo: "[❯]" },
-  "Del.G": { cargo: "1474245562793721997", prefixo: "Del.G" },
-  "Delg.": { cargo: "1474245639700221962", prefixo: "Delg." },
-  "Esc.": { cargo: "1474245777621782620", prefixo: "Esc." },
-  "Insp.": { cargo: "1474245842260197570", prefixo: "Insp." },
-  "Agnt 1º Clss": { cargo: "1474246195517063168", prefixo: "Agnt 1º Clss" },
-  "Agnt 2º Clss": { cargo: "1474246300085125140", prefixo: "Agnt 2º Clss" },
-  "Agnt 3º Clss": { cargo: "1474246381895028847", prefixo: "Agnt 3º Clss" },
-  "Aluno": { cargo: "1474249202174263458", prefixo: "Aluno" }
+  "Coronel": { cargo: "1474226455729668156", prefixo: "[✵ ✵ ✵]", emoji: "🌟" },
+  "Tenente-Coronel": { cargo: "1474226912934232239", prefixo: "[✵ ✵ ✧]", emoji: "✨" },
+  "Major": { cargo: "1512085315177807882", prefixo: "[✷✧✧]", emoji: "🌟" },
+  "Capitão": { cargo: "1474228200694616176", prefixo: "[✧ ✧ ✧]", emoji: "🎖️" },
+  "1º Tenente": { cargo: "1474228316100886702", prefixo: "[✧ ✧]", emoji: "🥇" },
+  "2º Tenente": { cargo: "1474228418420670596", prefixo: "[✧]", emoji: "🥈" },
+  "Aspirante": { cargo: "1474228707173601330", prefixo: "[✯]", emoji: "🥉" },
+  "Subtenente": { cargo: "1474229761550061629", prefixo: "[▵]", emoji: "🔹" },
+  "1º Sargento": { cargo: "1474230092631642215", prefixo: "[❯❯❯ ❯❯]", emoji: "🔰" },
+  "2º Sargento": { cargo: "1474230277957222420", prefixo: "[❯❯❯ ❯]", emoji: "🔰" },
+  "3º Sargento": { cargo: "1474230429350363166", prefixo: "[❯❯❯]", emoji: "🔰" },
+  "Cabo": { cargo: "1474230554453872680", prefixo: "[❯ ]", emoji: "🎗️" },
+  "Soldado": { cargo: "1474230626231259207", prefixo: "[❯]", emoji: "👣" },
+  "Al Soldado": { cargo: "1474230926836895876", prefixo: "[❯]", emoji: "📖" },
+  "Del.G": { cargo: "1474245562793721997", prefixo: "Del.G", emoji: "💼" },
+  "Delg.": { cargo: "1474245639700221962", prefixo: "Delg.", emoji: "💼" },
+  "Esc.": { cargo: "1474245777621782620", prefixo: "Esc.", emoji: "📝" },
+  "Insp.": { cargo: "1474245842260197570", prefixo: "Insp.", emoji: "🔍" },
+  "Agnt 1º Clss": { cargo: "1474246195517063168", prefixo: "Agnt 1º Clss", emoji: "⚔️" },
+  "Agnt 2º Clss": { cargo: "1474246300085125140", prefixo: "Agnt 2º Clss", emoji: "⚔️" },
+  "Agnt 3º Clss": { cargo: "1474246381895028847", prefixo: "Agnt 3º Clss", emoji: "⚔️" },
+  "Aluno": { cargo: "1474249202174263458", prefixo: "Aluno", emoji: "✏️" }
 };
 
 let registros = new Map();
@@ -102,7 +104,7 @@ client.once(Events.ClientReady, async () => {
     );
     console.log('✅ Comandos / registrados com sucesso no servidor!');
   } catch (error) {
-    console.error('❌ Erro ao registrar comandos (Verifique permissões e ID do Token):', error.message);
+    console.error('❌ Erro ao registrar comandos:', error.message);
   }
 });
 
@@ -111,7 +113,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // COMANDO /PAINEL
     if (interaction.isChatInputCommand()) {
       if (interaction.commandName === 'painel') {
-        // Bloqueia usuários comuns de usarem o comando
         if (!interaction.member.roles.cache.has(CARGO_APROVADOR) && !interaction.member.permissions.has('Administrator')) {
           return interaction.reply({
             content: '❌ **Acesso Negado!** Apenas Oficiais e membros da Staff autorizados podem acionar o painel de registro.',
@@ -146,18 +147,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setTitle('Ficha de Registro Policial');
 
       modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Silva').setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('Número do RG').setStyle(TextInputStyle.Short).setPlaceholder('Ex: 12345').setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('autorizacao').setLabel('Quem autorizou?').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Cel. Roberto').setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short).setPlaceholder('Insira o código da sua unidade').setRequired(true)
-        )
+        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Silva').setRequired(true)),
+        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('rg').setLabel('Número do RG').setStyle(TextInputStyle.Short).setPlaceholder('Ex: 12345').setRequired(true)),
+        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('autorizacao').setLabel('Quem autorizou?').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Cel. Roberto').setRequired(true)),
+        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short).setPlaceholder('Insira o código da sua unidade').setRequired(true))
       );
 
       return interaction.showModal(modal);
@@ -174,11 +167,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       salvarRegistros();
 
+      // 🔥 MUDANÇA AQUI: O menu agora puxa o emoji customizado definido no objeto UNIDADES
       const unidadeMenu = new StringSelectMenuBuilder()
         .setCustomId('selecionar_unidade')
         .setPlaceholder('Escolha a sua Unidade Atendida...')
         .addOptions(
-          Object.keys(UNIDADES).map(u => ({ label: u, value: u, emoji: '🚓' }))
+          Object.keys(UNIDADES).map(u => ({ 
+            label: u, 
+            value: u, 
+            emoji: UNIDADES[u].emoji // Pega o emoji personalizado daquela unidade
+          }))
         );
 
       return interaction.reply({
@@ -200,11 +198,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_PF : PATENTES_MILITARES;
 
+      // 🔥 MUDANÇA AQUI: O menu agora puxa o emoji customizado de dentro de PATENTES
       const menuPatente = new StringSelectMenuBuilder()
         .setCustomId('selecionar_patente')
         .setPlaceholder('Escolha a sua Patente/Cargo...')
         .addOptions(
-          lista.map(p => ({ label: p, value: p, emoji: '🎖️' }))
+          lista.map(p => ({ 
+            label: p, 
+            value: p, 
+            emoji: PATENTES[p]?.emoji || '🎖️' // Pega o emoji da patente (ou usa 🎖️ como segurança)
+          }))
         );
 
       return interaction.update({
@@ -241,18 +244,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'confirmar_registro') {
       const dados = registros.get(interaction.user.id);
 
-      if (!dados) {
-        return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados.', flags: [MessageFlags.Ephemeral] });
-      }
+      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados.', flags: [MessageFlags.Ephemeral] });
 
       if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
         return interaction.reply({ content: '❌ **Código de Incorporação Inválido!** O código digitado não confere com a unidade selecionada.', flags: [MessageFlags.Ephemeral] });
       }
 
       const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canal) {
-        return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', flags: [MessageFlags.Ephemeral] });
-      }
+      if (!canal) return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', flags: [MessageFlags.Ephemeral] });
 
       const embed = new EmbedBuilder()
         .setTitle('⏳ AGUARDANDO APROVAÇÃO')
@@ -267,7 +266,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
           { name: '🎖️ Patente Solicitada:', value: dados.patente, inline: true }
         )
         .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-        .setFooter({ text: 'Aguardando decisão da staff' })
         .setTimestamp();
 
       const row = new ActionRowBuilder().addComponents(
@@ -276,14 +274,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
       );
 
       await canal.send({ embeds: [embed], components: [row] });
-
-      return interaction.update({ content: '✅ **Sua ficha foi enviada com sucesso!** Aguarde a avaliação dos Oficiais Superiores no canal correspondente.', components: [] });
+      return interaction.update({ content: '✅ **Sua ficha foi enviada com sucesso!** Aguarde a avaliação dos Oficiais Superiores.', components: [] });
     }
 
     // BOTÃO DE APROVAR
     if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para validar este registro.', flags: [MessageFlags.Ephemeral] });
+        return interaction.reply({ content: '❌ Você não tem a atribuição necessária para validar este registro.', flags: [MessageFlags.Ephemeral] });
       }
 
       const userId = interaction.customId.split('_')[1];
@@ -295,14 +292,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       try {
         const membro = await interaction.guild.members.fetch(userId);
-
         if (UNIDADES[dados.unidade]?.cargo) await membro.roles.add(UNIDADES[dados.unidade].cargo);
         if (PATENTES[dados.patente]?.cargo) await membro.roles.add(PATENTES[dados.patente].cargo);
 
         const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
         await membro.setNickname(nick);
       } catch (err) {
-        console.error("Erro ao gerenciar cargos/nickname do usuário:", err.message);
+        console.error(err.message);
         erroGerenciamento = true;
       }
 
@@ -311,7 +307,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const embedAprovado = new EmbedBuilder()
           .setTitle('✅ CORPORAÇÃO ATUALIZADA - INCORPORADO')
           .setColor('#22c55e')
-          .setDescription(`O cidadão cumpriu os pré-requisitos solicitados e agora faz parte oficialmente do departamento militar.${erroGerenciamento ? '\n\n⚠️ *Nota: O bot não conseguiu gerenciar os cargos ou apelido deste usuário devido à hierarquia do Discord.*' : ''}`)
+          .setDescription(`O cidadão faz parte oficialmente do departamento militar.`)
           .addFields(
             { name: '👤 Operador:', value: `<@${userId}>` },
             { name: '🪪 Identidade (RG):', value: `\`${dados.rg}\``, inline: true },
@@ -319,22 +315,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
             { name: '🎖️ Patente/Cargo:', value: `\`${dados.patente}\``, inline: true }
           )
           .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-          .setFooter({ text: `Aprovado por: ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
           .setTimestamp();
 
         await canalAprovados.send({ embeds: [embedAprovado] });
       }
 
-      return interaction.update({ 
-        content: `✅ O registro de <@${userId}> foi **aprovado** por ${interaction.user}.${erroGerenciamento ? ' (Os cargos/apelido precisam ser colocados manualmente por falta de permissão hierárquica do bot).' : ' Cargos e prefixo aplicados com sucesso!'}`, 
-        components: [] 
-      });
+      return interaction.update({ content: `✅ O registro de <@${userId}> foi **aprovado**!`, components: [] });
     }
 
     // BOTÃO DE NEGAR
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para recusar este registro.', flags: [MessageFlags.Ephemeral] });
+        return interaction.reply({ content: '❌ Você não tem autorização para recusar este registro.', flags: [MessageFlags.Ephemeral] });
       }
 
       const userId = interaction.customId.split('_')[1];
@@ -345,14 +337,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const embedRecusado = new EmbedBuilder()
           .setTitle('❌ SOLICITAÇÃO RECUSADA')
           .setColor('#ef4444')
-          .setDescription(`A ficha de incorporação enviada não atende aos parâmetros exigidos ou contém inconsistências nos dados informados.`)
+          .setDescription(`A ficha de incorporação enviada não atende aos parâmetros exigidos.`)
           .addFields(
             { name: '👤 Candidato reprovado:', value: `<@${userId}>` },
             { name: '🪪 Nome enviado:', value: dados.nome, inline: true },
             { name: '📜 RG informado:', value: `\`${dados.rg}\``, inline: true }
           )
-          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-          .setFooter({ text: `Recusado por: ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
           .setTimestamp();
 
         await canalRecusados.send({ embeds: [embedRecusado] });
@@ -360,8 +350,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       registros.delete(userId);
       salvarRegistros();
-
-      return interaction.update({ content: `❌ O registro de <@${userId}> foi **recusado** por ${interaction.user} e os dados temporários foram expurgados.`, components: [] });
+      return interaction.update({ content: `❌ O registro de <@${userId}> foi **recusado**.`, components: [] });
     }
 
   } catch (error) {
