@@ -32,32 +32,32 @@ const CARGO_APROVADOR = '1518037419339812955';
 
 
 const UNIDADES = {
-  GAM: { codigo: 'GAMBS53453', cargo: '1474254662583451709', emoji: '🚁' },
-  CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844', emoji: '🚒' },
-  BOPE: { codigo: 'BOPEBS38457', cargo: '1472933428835123342', emoji: '💀' },
-  RECOM: { codigo: 'RECOMBS23745', cargo: '1472933947074941101', emoji: '⚡' },
+  GAM: { codigo: 'GAMBS53453', cargo: '1474254662583451709', emoji: '1518073952893669527' },
+  CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844', emoji: '1518073125777051750' },
+  BOPE: { codigo: 'BOPEBS38457', cargo: '1472933428835123342', emoji: '1518080295679823922' },
+  RECOM: { codigo: 'RECOMBS23745', cargo: '1472933947074941101', emoji: '1518079495804813484' },
   BPCHQ: { codigo: 'CHOQUEBS37238', cargo: '1472933561513283666', emoji: '1518077131559534726' },
-  PF: { codigo: 'PFBS37284', cargo: '1472933271137423394', emoji: '🦅' },
-  PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889', emoji: '🚔' },
-  PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035', emoji: '👮' }
+  PF: { codigo: 'PFBS37284', cargo: '1472933271137423394', emoji: '1518065935410532452' },
+  PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889', emoji: '1518072797753249873' },
+  PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035', emoji: '1518072852610285709' }
 };
 
 
 const PATENTES = {
-  "Coronel": { cargo: "1474226455729668156", prefixo: "[✵ ✵ ✵]", emoji: "🌟" },
-  "Tenente-Coronel": { cargo: "1474226912934232239", prefixo: "[✵ ✵ ✧]", emoji: "✨" },
-  "Major": { cargo: "1512085315177807882", prefixo: "[✷✧✧]", emoji: "🌟" },
-  "Capitão": { cargo: "1474228200694616176", prefixo: "[✧ ✧ ✧]", emoji: "🎖️" },
-  "1º Tenente": { cargo: "1474228316100886702", prefixo: "[✧ ✧]", emoji: "🥇" },
-  "2º Tenente": { cargo: "1474228418420670596", prefixo: "[✧]", emoji: "🥈" },
-  "Aspirante": { cargo: "1474228707173601330", prefixo: "[✯]", emoji: "🥉" },
-  "Subtenente": { cargo: "1474229761550061629", prefixo: "[▵]", emoji: "🔹" },
-  "1º Sargento": { cargo: "1474230092631642215", prefixo: "[❯❯❯ ❯❯]", emoji: "🔰" },
-  "2º Sargento": { cargo: "1474230277957222420", prefixo: "[❯❯❯ ❯]", emoji: "🔰" },
-  "3º Sargento": { cargo: "1474230429350363166", prefixo: "[❯❯❯]", emoji: "🔰" },
-  "Cabo": { cargo: "1474230554453872680", prefixo: "[❯ ]", emoji: "🎗️" },
-  "Soldado": { cargo: "1474230626231259207", prefixo: "[❯]", emoji: "👣" },
-  "Al Soldado": { cargo: "1474230926836895876", prefixo: "[❯]", emoji: "📖" },
+  "Coronel": { cargo: "1474226455729668156", prefixo: "[✵ ✵ ✵]", emoji: "1518085181221769276" },
+  "Tenente-Coronel": { cargo: "1474226912934232239", prefixo: "[✵ ✵ ✧]", emoji: "1518085261744013342" },
+  "Major": { cargo: "1512085315177807882", prefixo: "[✷✧✧]", emoji: "1518085342522245271" },
+  "Capitão": { cargo: "1474228200694616176", prefixo: "[✧ ✧ ✧]", emoji: "1518085423346225316" },
+  "1º Tenente": { cargo: "1474228316100886702", prefixo: "[✧ ✧]", emoji: "1518086019914666115" },
+  "2º Tenente": { cargo: "1474228418420670596", prefixo: "[✧]", emoji: "1518086151636779008" },
+  "Aspirante": { cargo: "1474228707173601330", prefixo: "[✯]", emoji: "1518086204891992216" },
+  "Subtenente": { cargo: "1474229761550061629", prefixo: "[▵]", emoji: "1518086267198242866" },
+  "1º Sargento": { cargo: "1474230092631642215", prefixo: "[❯❯❯ ❯❯]", emoji: "1518086321883713687" },
+  "2º Sargento": { cargo: "1474230277957222420", prefixo: "[❯❯❯ ❯]", emoji: "1518086366884397268" },
+  "3º Sargento": { cargo: "1474230429350363166", prefixo: "[❯❯❯]", emoji: "1518086419099156591" },
+  "Cabo": { cargo: "1474230554453872680", prefixo: "[❯❯]", emoji: "1518086482148196362" },
+  "Soldado": { cargo: "1474230626231259207", prefixo: "[❯]", emoji: "1518086550251114658" },
+  "Al Soldado": { cargo: "1474230926836895876", prefixo: "[❯]", emoji: "1518086550251114658" },
   "Del.G": { cargo: "1474245562793721997", prefixo: "Del.G", emoji: "💼" },
   "Delg.": { cargo: "1474245639700221962", prefixo: "Delg.", emoji: "💼" },
   "Esc.": { cargo: "1474245777621782620", prefixo: "Esc.", emoji: "📝" },
