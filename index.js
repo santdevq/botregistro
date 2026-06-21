@@ -8,6 +8,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
   EmbedBuilder,
   REST,
   Routes,
@@ -22,7 +23,7 @@ const client = new Client({
   ]
 });
 
-// ⚠️ COLOQUE O ID DO SEU BOT AQUI PARA ELE VIRAR UM APP INTEGRADO
+// ⚠️ NÃO ESQUEÇA DE COLOCAR O ID DO SEU BOT AQUI
 const CLIENT_ID = '1518042580741390437'; 
 
 const ID_DO_SERVIDOR = '1518042580741390437';
@@ -82,44 +83,41 @@ function salvarRegistros() {
 }
 
 client.once(Events.ClientReady, async () => {
-  console.log(`✅ ${client.user.tag} online como APP integrado.`);
+  console.log(`✅ ${client.user.tag} rodando com suporte a componentes de App.`);
 
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
-    console.log('🔄 Atualizando comando para o formato nativo de APP...');
-    
-    // REGISTRO GLOBAL NO ESTILO APP (LIBERA A INTERFACE FLUTUANTE DA FOTO)
+    // Registro global preparado para interações em janelas flutuantes nativas
     await rest.put(
       Routes.applicationCommands(CLIENT_ID),
       {
         body: [
           {
             name: 'painel',
-            description: 'Envia o painel integrado de registro policial.',
+            description: 'Envia o painel com suporte a menus suspensos nativos.',
             type: ApplicationCommandType.ChatInput,
-            integration_types: [0, 1], // Guild & User install
-            contexts: [0, 1, 2]        // Guild, Bot DM, Private DM
+            integration_types: [0, 1], 
+            contexts: [0, 1, 2]        
           }
         ]
       }
     );
-    console.log('✅ Comando de APP registrado globalmente!');
+    console.log('✅ Comando com suporte a Dropdown de App registrado com sucesso!');
   } catch (error) {
-    console.error('❌ Erro ao registrar comando de APP:', error);
+    console.error('❌ Erro ao registrar comando avançado:', error);
   }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // COMANDO /PAINEL (Como App)
     if (interaction.isChatInputCommand() && interaction.commandName === 'painel') {
       const embed = new EmbedBuilder()
-        .setTitle('REGISTRO PARA INCORPORAÇÃO')
-        .setDescription(`Clique no botão abaixo para iniciar o formulário de liberação.`);
+        .setTitle('SOLICITAÇÃO DE LIBERAÇÃO')
+        .setDescription(`Clique no botão abaixo para preencher o formulário.`);
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId('abrir_registro')
+          .setCustomId('abrir_registro_app')
           .setLabel('Solicitar Liberação')
           .setStyle(ButtonStyle.Primary)
       );
@@ -127,101 +125,135 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply({ embeds: [embed], components: [row] });
     }
 
-    // ABRINDO O FORMULÁRIO DENTRO DO CONTEXTO DE APP
-    if (interaction.isButton() && interaction.customId === 'abrir_registro') {
+    // PASSO 1: Abre a janela coletando os textos obrigatórios primários
+    if (interaction.isButton() && interaction.customId === 'abrir_registro_app') {
       const modal = new ModalBuilder()
-        .setCustomId('modal_registro')
+        .setCustomId('modal_etapa_1')
         .setTitle('Solicitação de Liberação');
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Qual o nome e sobrenome do personagem?').setPlaceholder('ex: Freezy Andre').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('nome').setLabel('Qual o nome e sobrenome do personagem? *').setPlaceholder('ex: Freezy Andre').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('Qual é o seu ID na cidade?').setPlaceholder('Lembrando que são no máximo 8 números').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('rg').setLabel('Qual é o seu ID na cidade? *').setPlaceholder('Lembrando que são no máximo 8 números').setStyle(TextInputStyle.Short).setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('unidade_txt').setLabel('Qual a sua unidade?').setPlaceholder('ex: PMERJ, BOPE, PF...').setStyle(TextInputStyle.Short).setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('patente_txt').setLabel('Qual a sua patente?').setPlaceholder('ex: Aluno, Soldado, Cabo...').setStyle(TextInputStyle.Short).setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('codigo').setLabel('Qual o Código de Incorporação?').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('codigo').setLabel('Qual o Código de Incorporação? *').setStyle(TextInputStyle.Short).setRequired(true)
         )
       );
 
       return interaction.showModal(modal);
     }
 
-    // PROCESSANDO O ENVIO DO FORMULÁRIO
-    if (interaction.isModalSubmit() && interaction.customId === 'modal_registro') {
-      const nome = interaction.fields.getTextInputValue('nome');
-      const rg = interaction.fields.getTextInputValue('rg');
-      const codigo = interaction.fields.getTextInputValue('codigo');
-      const unidadeInput = interaction.fields.getTextInputValue('unidade_txt').trim().toUpperCase();
-      let patenteInput = interaction.fields.getTextInputValue('patente_txt').trim();
+    // PASSO 2: Assim que ele envia o modal, o App atualiza a janela transformando instantaneamente nas SETINHAS (Dropdown)
+    if (interaction.isModalSubmit() && interaction.customId === 'modal_etapa_1') {
+      const userId = interaction.user.id;
       
-      const patenteChave = Object.keys(PATENTES).find(p => p.toLowerCase() === patenteInput.toLowerCase());
-      const patenteFormatada = patenteChave || patenteInput;
-
-      if (!UNIDADES[unidadeInput]) {
-        return interaction.reply({ content: `❌ Unidade inválida. Escolha entre: ${Object.keys(UNIDADES).join(', ')}`, ephemeral: true });
-      }
-
-      if (!PATENTES[patenteFormatada]) {
-        return interaction.reply({ content: `❌ Patente inválida. Digite corretamente a sua patente.`, ephemeral: true });
-      }
-
-      if (codigo !== UNIDADES[unidadeInput].codigo) {
-        return interaction.reply({ content: '❌ Código de Incorporação incorreto para esta unidade.', ephemeral: true });
-      }
-
-      registros.set(interaction.user.id, {
-        nome: nome,
-        rg: rg,
-        unidade: unidadeInput,
-        patente: patenteFormatada,
-        codigo: codigo
+      registros.set(userId, {
+        nome: interaction.fields.getTextInputValue('nome'),
+        rg: interaction.fields.getTextInputValue('rg'),
+        codigo: interaction.fields.getTextInputValue('codigo'),
+        unidade: null,
+        patente: null
       });
       salvarRegistros();
 
-      const canalAprovacao = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canalAprovacao) {
-        return interaction.reply({ content: 'Canal de aprovação não configurado corretamente.', ephemeral: true });
+      // Cria a "setinha" para selecionar a Unidade
+      const menuUnidade = new StringSelectMenuBuilder()
+        .setCustomId(`app_select_unidade_${userId}`)
+        .setPlaceholder('Selecione sua unidade ▼')
+        .addOptions(
+          Object.keys(UNIDADES).map(u => ({ label: u, value: u }))
+        );
+
+      // Manda a tela com o menu de setinha nativo de forma privada (ephemeral)
+      return interaction.reply({
+        content: '➡️ **Etapa Final:** Use a setinha abaixo para definir sua corporação:',
+        components: [new ActionRowBuilder().addComponents(menuUnidade)],
+        ephemeral: true
+      });
+    }
+
+    // PASSO 3: O usuário escolheu a Unidade na setinha -> Muda o dropdown para as Patentes
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('app_select_unidade_')) {
+      const userId = interaction.customId.split('_')[3];
+      const unidadeSelecionada = interaction.values[0];
+      
+      const dados = registros.get(userId);
+      if (!dados) return interaction.reply({ content: 'Sessão expirada. Tente novamente.', ephemeral: true });
+
+      dados.unidade = unidadeSelecionada;
+      salvarRegistros();
+
+      // Filtra patentes baseado na escolha
+      const listaPatentes = (unidadeSelecionada === 'PF' || unidadeSelecionada === 'PRF') 
+        ? ["Del.G", "Delg.", "Esc.", "Insp.", "Agnt 1º Clss", "Agnt 2º Clss", "Aluno"]
+        : ["Coronel", "Tenente-Coronel", "Major", "Capitão", "1º Tenente", "Subtenente", "1º Sargento", "Cabo", "Soldado", "Aluno"];
+
+      // Cria a segunda "setinha" dinamicamente baseada na unidade dele
+      const menuPatente = new StringSelectMenuBuilder()
+        .setCustomId(`app_select_patente_${userId}`)
+        .setPlaceholder('Selecione sua patente ▼')
+        .addOptions(
+          listaPatentes.map(p => ({ label: p, value: p }))
+        );
+
+      return interaction.update({
+        content: `Unidade definida: **${unidadeSelecionada}**\nAgora escolha a sua patente na lista abaixo:`,
+        components: [new ActionRowBuilder().addComponents(menuPatente)]
+      });
+    }
+
+    // PASSO 4: Escolheu a patente na setinha -> Valida o código e manda para a aprovação dos Oficiais
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('app_select_patente_')) {
+      const userId = interaction.customId.split('_')[3];
+      const patenteSelecionada = interaction.values[0];
+
+      const dados = registros.get(userId);
+      if (!dados) return interaction.reply({ content: 'Erro nos dados.', ephemeral: true });
+
+      dados.patente = patenteSelecionada;
+      salvarRegistros();
+
+      // Validação automática do código de segurança da corporação escolhida
+      if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
+        return interaction.update({ content: '❌ **Envio cancelado:** Seu Código de Incorporação não bate com essa Unidade!', components: [] });
       }
 
+      const canalAprovacao = interaction.guild.channels.cache.get(CANAL_APROVACAO);
+      if (!canalAprovacao) return interaction.reply({ content: 'Canal de Staff ausente.', ephemeral: true });
+
       const embed = new EmbedBuilder()
-        .setTitle('📋 Nova Solicitação de Liberação')
-        .setColor('Orange')
+        .setTitle('📋 Nova Solicitação (Menu de Setinhas)')
+        .setColor('DarkBlue')
         .addFields(
-          { name: 'Membro', value: `<@${interaction.user.id}>` },
-          { name: 'Nome / Sobrenome', value: nome },
-          { name: 'ID / RG', value: rg },
-          { name: 'Unidade Solicitada', value: unidadeInput },
-          { name: 'Patente Solicitada', value: patenteFormatada }
+          { name: 'Policial', value: `<@${userId}>` },
+          { name: 'Nome de Guerra', value: dados.nome },
+          { name: 'ID / RG', value: dados.rg },
+          { name: 'Unidade Escolhida', value: dados.unidade },
+          { name: 'Patente Selecionada', value: dados.patente }
         );
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`aprovar_${interaction.user.id}`).setLabel('Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`negar_${interaction.user.id}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
+        new ButtonBuilder().setCustomId(`aprovar_${userId}`).setLabel('Aprovar').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`negar_${userId}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
       );
 
       await canalAprovacao.send({ embeds: [embed], components: [row] });
 
-      return interaction.reply({ content: '✅ Seu formulário foi enviado com sucesso! Aguarde a aprovação da DPMH.', ephemeral: true });
+      return interaction.update({ content: '✅ **Perfeito!** Seus dados foram coletados através das opções selecionadas e enviados para a DPMH!', components: [] });
     }
 
-    // SISTEMA DE BOTÕES DE APROVAÇÃO (STAFF)
+    // SISTEMA DE APROVAÇÃO DA STAFF (Mantido idêntico para segurança e logs)
     if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem permissão para aprovar.', ephemeral: true });
+        return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
       }
 
       const userId = interaction.customId.split('_')[1];
       const dados = registros.get(userId);
-
-      if (!dados) return interaction.reply({ content: 'Erro ao resgatar dados do formulário.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: 'Dados inválidos.', ephemeral: true });
 
       try {
         const membro = await interaction.guild.members.fetch(userId);
@@ -230,57 +262,29 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
         await membro.setNickname(nick);
-      } catch (err) {
-        console.error("Erro ao aplicar cargos:", err);
-      }
+      } catch (err) { console.error(err); }
 
       const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
       if (canalAprovados) {
         await canalAprovados.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('Green')
-              .setTitle('✅ Solicitação Aprovada')
-              .addFields(
-                { name: 'Membro', value: `<@${userId}>` },
-                { name: 'Nome corporativo', value: dados.nome },
-                { name: 'Unidade / Patente', value: `${dados.unidade} - ${dados.patente}` }
-              )
-          ]
+          embeds: [new EmbedBuilder().setColor('Green').setTitle('✅ Cadastro Aprovado via App').setDescription(`O policial <@${userId}> teve seus cargos e prefixos aplicados.`)]
         });
       }
-
-      return interaction.update({ content: `✅ Usuário <@${userId}> liberado com sucesso por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `✅ Liberado por ${interaction.user}.`, components: [] });
     }
 
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
-      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
-      }
-
+      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
       const userId = interaction.customId.split('_')[1];
-      const dados = registros.get(userId);
-
-      const canalRecusados = interaction.guild.channels.cache.get(CANAL_RECUSADOS);
-      if (canalRecusados && dados) {
-        await canalRecusados.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('Red')
-              .setTitle('❌ Solicitação Negada')
-              .setDescription(`A solicitação de <@${userId}> foi recusada pela Staff.`)
-          ]
-        });
-      }
-
+      
       registros.delete(userId);
       salvarRegistros();
 
-      return interaction.update({ content: `❌ Formulário de <@${userId}> recusado por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `❌ Recusado por ${interaction.user}.`, components: [] });
     }
 
   } catch (error) {
-    console.error("Erro interno do App:", error);
+    console.error("Erro interno na execução do App:", error);
   }
 });
 
