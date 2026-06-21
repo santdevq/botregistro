@@ -189,4 +189,158 @@ client.on(Events.InteractionCreate, async (interaction) => {
       dados.unidade = unidade;
       salvarRegistros();
 
-      const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_
+      const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_PF : PATENTES_MILITARES;
+
+      const menuPatente = new StringSelectMenuBuilder()
+        .setCustomId('selecionar_patente')
+        .setPlaceholder('Escolha a patente')
+        .addOptions(
+          lista.map(p => ({ label: p, value: p }))
+        );
+
+      return interaction.update({
+        content: `Unidade: ${unidade}`,
+        components: [new ActionRowBuilder().addComponents(menuPatente)]
+      });
+    }
+
+    // SELECIONOU PATENTE
+    if (interaction.isStringSelectMenu() && interaction.customId === 'selecionar_patente') {
+      const patente = interaction.values[0];
+      const dados = registros.get(interaction.user.id);
+
+      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+
+      dados.patente = patente;
+      salvarRegistros();
+
+      return interaction.update({
+        content: `Unidade: ${dados.unidade}\nPatente: ${patente}`,
+        components: [
+          new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('confirmar_registro')
+              .setLabel('Enviar Registro')
+              .setStyle(ButtonStyle.Success)
+          ]
+        ]
+      });
+    }
+
+    // CONFIRMAR E ENVIAR PARA APROVAÇÃO
+    if (interaction.isButton() && interaction.customId === 'confirmar_registro') {
+      const dados = registros.get(interaction.user.id);
+
+      if (!dados) {
+        return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+      }
+
+      const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
+      if (!canal) {
+        return interaction.reply({ content: 'Canal de aprovação não encontrado.', ephemeral: true });
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('📋 Novo Registro')
+        .addFields(
+          { name: 'Nome', value: dados.nome },
+          { name: 'RG', value: dados.rg },
+          { name: 'Autorização', value: dados.autorizacao },
+          { name: 'Unidade', value: dados.unidade },
+          { name: 'Patente', value: dados.patente }
+        );
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`aprovar_${interaction.user.id}`).setLabel('Aprovar').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`negar_${interaction.user.id}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
+      );
+
+      await canal.send({ embeds: [embed], components: [row] });
+
+      return interaction.update({ content: '✅ Enviado para análise.', components: [] });
+    }
+
+    // BOTÃO DE APROVAR
+    if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
+      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
+        return interaction.reply({ content: '❌ Você não possui permissão.', ephemeral: true });
+      }
+
+      const userId = interaction.customId.split('_')[1];
+      const dados = registros.get(userId);
+
+      if (!dados) return interaction.reply({ content: 'Dados do registro não encontrados.', ephemeral: true });
+
+      try {
+        const membro = await interaction.guild.members.fetch(userId);
+
+        if (UNIDADES[dados.unidade]?.cargo) await membro.roles.add(UNIDADES[dados.unidade].cargo);
+        if (PATENTES[dados.patente]?.cargo) await membro.roles.add(PATENTES[dados.patente].cargo);
+
+        const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
+        await membro.setNickname(nick);
+      } catch (err) {
+        console.error("Erro ao gerenciar cargos/nickname do usuário:", err);
+      }
+
+      const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
+      if (canalAprovados) {
+        await canalAprovados.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Green')
+              .setTitle('✅ Registro Aprovado')
+              .addFields(
+                { name: 'Usuário', value: `<@${userId}>` },
+                { name: 'Nome', value: dados.nome },
+                { name: 'RG', value: dados.rg },
+                { name: 'Unidade', value: dados.unidade },
+                { name: 'Patente', value: dados.patente }
+              )
+          ]
+        });
+      }
+
+      return interaction.update({ content: `✅ Registro de <@${userId}> aprovado por ${interaction.user}.`, components: [] });
+    }
+
+    // BOTÃO DE NEGAR
+    if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
+      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
+        return interaction.reply({ content: '❌ Você não possui permissão.', ephemeral: true });
+      }
+
+      const userId = interaction.customId.split('_')[1];
+      const dados = registros.get(userId);
+
+      const canalRecusados = interaction.guild.channels.cache.get(CANAL_RECUSADOS);
+      if (canalRecusados && dados) {
+        await canalRecusados.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setTitle('❌ Registro Recusado')
+              .addFields(
+                { name: 'Usuário', value: `<@${userId}>` },
+                { name: 'Nome', value: dados.nome },
+                { name: 'RG', value: dados.rg }
+              )
+          ]
+        });
+      }
+
+      registros.delete(userId);
+      salvarRegistros();
+
+      return interaction.update({ content: `❌ Registro de <@${userId}> recusado por ${interaction.user}.`, components: [] });
+    }
+
+  } catch (error) {
+    console.error("Erro na execução da interação:", error);
+  }
+});
+
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
+
+client.login(process.env.TOKEN);
