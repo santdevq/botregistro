@@ -92,6 +92,7 @@ const PATENTES_PF = [
 client.once(Events.ClientReady, async () => {
   console.log(`✅ ${client.user.tag} online`);
 
+  // Registra o comando /painel instantaneamente no seu servidor
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
     console.log('🔄 Atualizando comandos / (slash) no servidor...');
@@ -160,7 +161,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       salvarRegistros();
 
-      const unidademenu = new StringSelectMenuBuilder()
+      const unidadeMenu = new StringSelectMenuBuilder()
         .setCustomId('selecionar_unidade')
         .setPlaceholder('Escolha a unidade')
         .addOptions(
@@ -170,7 +171,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.reply({
         content: 'Selecione sua unidade.',
         ephemeral: true,
-        components: [new ActionRowBuilder().addComponents(unidademenu)]
+        components: [new ActionRowBuilder().addComponents(unidadeMenu)]
       });
     }
 
@@ -300,7 +301,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
-      return interaction.update({ content: `✅ Registro de <@${userId}> approved por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `✅ Registro de <@${userId}> aprovado por ${interaction.user}.`, components: [] });
     }
 
     // BOTÃO DE NEGAR
