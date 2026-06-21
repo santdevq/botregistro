@@ -217,7 +217,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
               .setCustomId('confirmar_registro')
               .setLabel('Enviar Registro')
               .setStyle(ButtonStyle.Success)
-          ]
+          )
         ]
       });
     }
@@ -300,7 +300,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
-      return interaction.update({ content: `✅ Registro de <@${userId}> aprovado por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `✅ Registro de <@${userId}> approved por ${interaction.user}.`, components: [] });
     }
 
     // BOTÃO DE NEGAR
