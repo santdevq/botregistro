@@ -30,7 +30,6 @@ const CANAL_RECUSADOS = '1518038002939461785';
 
 const CARGO_APROVADOR = '1518037419339812955';
 
-
 const UNIDADES = {
   GAM: { codigo: 'GAMBS53453', cargo: '1474254662583451709', emoji: '1518073952893669527' },
   CBMERJ: { codigo: 'CBMERJBS32834', cargo: '1507573577224945844', emoji: '1518073125777051750' },
@@ -41,7 +40,6 @@ const UNIDADES = {
   PRF: { codigo: 'PRFBS38248', cargo: '1472935135581044889', emoji: '1518072797753249873' },
   PMERJ: { codigo: 'PMERJBS37234', cargo: '1472933106381226035', emoji: '1518072852610285709' }
 };
-
 
 const PATENTES = {
   "Coronel": { cargo: "1474226455729668156", prefixo: "[✵ ✵ ✵]", emoji: "1518085181221769276" },
@@ -167,16 +165,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       salvarRegistros();
 
-      // 🔥 MUDANÇA AQUI: O menu agora puxa o emoji customizado definido no objeto UNIDADES
+      // 🔥 LÓGICA CORRIGIDA AQUI: Converte strings numéricas em objetos de emoji aceitáveis pelo Discord
       const unidadeMenu = new StringSelectMenuBuilder()
         .setCustomId('selecionar_unidade')
         .setPlaceholder('Escolha a sua Unidade Atendida...')
         .addOptions(
-          Object.keys(UNIDADES).map(u => ({ 
-            label: u, 
-            value: u, 
-            emoji: UNIDADES[u].emoji // Pega o emoji personalizado daquela unidade
-          }))
+          Object.keys(UNIDADES).map(u => {
+            const opcao = { label: u, value: u };
+            const emojiOriginal = UNIDADES[u].emoji;
+
+            if (emojiOriginal) {
+              // Se tiver apenas números, o código entende que é um ID de emoji customizado
+              if (/^\d+$/.test(emojiOriginal)) {
+                opcao.emoji = { id: emojiOriginal };
+              } else {
+                opcao.emoji = emojiOriginal;
+              }
+            }
+            return opcao;
+          })
         );
 
       return interaction.reply({
@@ -198,16 +205,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_PF : PATENTES_MILITARES;
 
-      // 🔥 MUDANÇA AQUI: O menu agora puxa o emoji customizado de dentro de PATENTES
+      // 🔥 LÓGICA CORRIGIDA AQUI: Tratamento idêntico para a lista dinâmica de patentes
       const menuPatente = new StringSelectMenuBuilder()
         .setCustomId('selecionar_patente')
         .setPlaceholder('Escolha a sua Patente/Cargo...')
         .addOptions(
-          lista.map(p => ({ 
-            label: p, 
-            value: p, 
-            emoji: PATENTES[p]?.emoji || '🎖️' // Pega o emoji da patente (ou usa 🎖️ como segurança)
-          }))
+          lista.map(p => {
+            const opcao = { label: p, value: p };
+            const emojiOriginal = PATENTES[p]?.emoji;
+
+            if (emojiOriginal) {
+              if (/^\d+$/.test(emojiOriginal)) {
+                opcao.emoji = { id: emojiOriginal };
+              } else {
+                opcao.emoji = emojiOriginal;
+              }
+            } else {
+              opcao.emoji = '🎖️';
+            }
+            return opcao;
+          })
         );
 
       return interaction.update({
@@ -325,40 +342,4 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     // BOTÃO DE NEGAR
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
-      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem autorização para recusar este registro.', flags: [MessageFlags.Ephemeral] });
-      }
-
-      const userId = interaction.customId.split('_')[1];
-      const dados = registros.get(userId);
-
-      const canalRecusados = interaction.guild.channels.cache.get(CANAL_RECUSADOS);
-      if (canalRecusados && dados) {
-        const embedRecusado = new EmbedBuilder()
-          .setTitle('❌ SOLICITAÇÃO RECUSADA')
-          .setColor('#ef4444')
-          .setDescription(`A ficha de incorporação enviada não atende aos parâmetros exigidos.`)
-          .addFields(
-            { name: '👤 Candidato reprovado:', value: `<@${userId}>` },
-            { name: '🪪 Nome enviado:', value: dados.nome, inline: true },
-            { name: '📜 RG informado:', value: `\`${dados.rg}\``, inline: true }
-          )
-          .setTimestamp();
-
-        await canalRecusados.send({ embeds: [embedRecusado] });
-      }
-
-      registros.delete(userId);
-      salvarRegistros();
-      return interaction.update({ content: `❌ O registro de <@${userId}> foi **recusado**.`, components: [] });
-    }
-
-  } catch (error) {
-    console.error("Erro na execução da interação:", error);
-  }
-});
-
-process.on('unhandledRejection', console.error);
-process.on('uncaughtException', console.error);
-
-client.login(process.env.TOKEN);
+      if (!interaction.member.roles
