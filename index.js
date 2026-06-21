@@ -11,8 +11,7 @@ const {
   StringSelectMenuBuilder,
   EmbedBuilder,
   REST,
-  Routes,
-  ApplicationCommandType
+  Routes
 } = require('discord.js');
 const fs = require('fs');
 
@@ -23,13 +22,11 @@ const client = new Client({
   ]
 });
 
-// ⚠️ COLOQUE O ID DO SEU BOT AQUI (ESSENCIAL PARA VIRAR APP)
-const CLIENT_ID = '1518042580741390437'; 
-
 const ID_DO_SERVIDOR = '1518042580741390437';
 const CANAL_APROVACAO = '1518038258922160138';
 const CANAL_APROVADOS = '1518038002939461785';
 const CANAL_RECUSADOS = '1518038002939461785';
+
 const CARGO_APROVADOR = '1518037419339812955';
 
 const UNIDADES = {
@@ -82,183 +79,114 @@ function salvarRegistros() {
   );
 }
 
+const PATENTES_MILITARES = [
+  "Coronel", "Tenente-Coronel", "Major", "Capitão", "1º Tenente", "2º Tenente",
+  "Aspirante", "Subtenente", "1º Sargento", "2º Sargento", "3º Sargento",
+  "Cabo", "Soldado", "Al Soldado"
+];
+
+const PATENTES_PF = [
+  "Del.G", "Delg.", "Esc.", "Insp.", "Agnt 1º Clss", "Agnt 2º Clss", "Agnt 3º Clss", "Aluno"
+];
+
 client.once(Events.ClientReady, async () => {
-  console.log(`✅ ${client.user.tag} online montando escopo de App.`);
+  console.log(`✅ ${client.user.tag} online`);
 
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
-    // Forçando o comando a ser registrado com os novos tipos de integração de UI integrada do Discord
+    console.log('🔄 Atualizando comandos / (slash) no servidor...');
     await rest.put(
-      Routes.applicationCommands(CLIENT_ID),
-      {
-        body: [
-          {
-            name: 'painel',
-            description: 'Abre o formulário de liberação corporativa.',
-            type: ApplicationCommandType.ChatInput,
-            integration_types: [0, 1], 
-            contexts: [0, 1, 2]        
-          }
-        ]
-      }
+      Routes.applicationGuildCommands(client.user.id, ID_DO_SERVIDOR),
+      { body: [{ name: 'painel', description: 'Envia o painel de registro policial.' }] }
     );
-    console.log('✅ Modo de comando integrado injetado globalmente!');
+    console.log('✅ Comandos / registrados com sucesso no servidor!');
   } catch (error) {
-    console.error('Erro no registro global:', error);
+    console.error('❌ Erro ao registrar comandos:', error);
   }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    if (interaction.isChatInputCommand() && interaction.commandName === 'painel') {
-      const embed = new EmbedBuilder()
-        .setTitle('SOLICITAÇÃO DE LIBERAÇÃO')
-        .setDescription(`Clique no botão abaixo para preencher o formulário.`);
+    // COMANDO /PAINEL
+    if (interaction.isChatInputCommand()) {
+      if (interaction.commandName === 'painel') {
+        const embed = new EmbedBuilder()
+          .setTitle('REGISTRO PARA INCORPORAÇÃO')
+          .setDescription(`Clique no botão abaixo para iniciar o registro.`);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('abrir_registro_app')
-          .setLabel('Solicitar Liberação')
-          .setStyle(ButtonStyle.Primary)
-      );
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('abrir_registro')
+            .setLabel('Registro Policial')
+            .setStyle(ButtonStyle.Primary)
+        );
 
-      return interaction.reply({ embeds: [embed], components: [row] });
+        return interaction.reply({ embeds: [embed], components: [row] });
+      }
     }
 
-    // ETAPA 1: O Bot abre a tela flutuante de coleta textual
-    if (interaction.isButton() && interaction.customId === 'abrir_registro_app') {
+    // ABRIR MODAL
+    if (interaction.isButton() && interaction.customId === 'abrir_registro') {
       const modal = new ModalBuilder()
-        .setCustomId('modal_etapa_1')
-        .setTitle('Solicitação de Liberação');
+        .setCustomId('modal_registro')
+        .setTitle('Registro Policial');
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('Qual é o seu ID na cidade? *').setPlaceholder('Lembrando que são no máximo 8 números, ex: 2').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Qual é o nome e sobrenome do seu personagem? *').setPlaceholder('ex: Freezy Andre').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('rg').setLabel('RG').setStyle(TextInputStyle.Short)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('recrutador').setLabel('Qual o QRA do seu recrutador? *').setPlaceholder('ex: Freezy Andre | 0000').setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder().setCustomId('autorizacao').setLabel('Autorização').setStyle(TextInputStyle.Short)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short)
         )
       );
 
       return interaction.showModal(modal);
     }
 
-    // ETAPA 2: Forçando a transição imediata para o menu de setinha (Dropdown)
-    if (interaction.isModalSubmit() && interaction.customId === 'modal_etapa_1') {
-      const userId = interaction.user.id;
-      
-      registros.set(userId, {
-        rg: interaction.fields.getTextInputValue('rg'),
+    // SUBMETEU MODAL
+    if (interaction.isModalSubmit() && interaction.customId === 'modal_registro') {
+      registros.set(interaction.user.id, {
         nome: interaction.fields.getTextInputValue('nome'),
-        recrutador: interaction.fields.getTextInputValue('recrutador'),
-        unidade: "PMERJ", // Define PMERJ como padrão para carregar as patentes militares
-        patente: null
+        rg: interaction.fields.getTextInputValue('rg'),
+        autorizacao: interaction.fields.getTextInputValue('autorizacao'),
+        codigo: interaction.fields.getTextInputValue('codigo')
       });
+
       salvarRegistros();
 
-      // Gerando a lista de patentes militares para a setinha (Igual ao seu print)
-      const menuPatente = new StringSelectMenuBuilder()
-        .setCustomId(`app_select_patente_${userId}`)
-        .setPlaceholder('Selecione sua patente')
-        .addOptions([
-          { label: 'Aluno', value: 'Aluno' },
-          { label: 'Soldado', value: 'Soldado' },
-          { label: 'Cabo', value: 'Cabo' },
-          { label: '3º Sargento', value: '3º Sargento' },
-          { label: '2º Sargento', value: '2º Sargento' },
-          { label: '1º Sargento', value: '1º Sargento' }
-        ]);
-
-      // Responde com o dropdown nativo da API de forma privada e instantânea
-      return interaction.reply({
-        content: '⬇️ **Selecione abaixo a sua Patente para finalizar o envio:**',
-        components: [new ActionRowBuilder().addComponents(menuPatente)],
-        ephemeral: true
-      });
-    }
-
-    // ETAPA 3: Pegou o clique da setinha e despacha tudo direto para a Staff analisar
-    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('app_select_patente_')) {
-      const userId = interaction.customId.split('_')[3];
-      const patenteSelecionada = interaction.values[0];
-
-      const dados = registros.get(userId);
-      if (!dados) return interaction.reply({ content: 'Sessão perdida, execute o comando de novo.', ephemeral: true });
-
-      dados.patente = patenteSelecionada;
-      salvarRegistros();
-
-      const canalAprovacao = interaction.guild.channels.cache.get(CANAL_APROVACAO);
-      if (!canalAprovacao) return interaction.reply({ content: 'Canal de Staff não configurado.', ephemeral: true });
-
-      const embed = new EmbedBuilder()
-        .setTitle('📋 Nova Solicitação de Liberação')
-        .setColor('Blue')
-        .addFields(
-          { name: 'Membro', value: `<@${userId}>` },
-          { name: 'ID na Cidade', value: dados.rg },
-          { name: 'Nome do Personagem', value: dados.nome },
-          { name: 'QRA do Recrutador', value: dados.recrutador },
-          { name: 'Patente Escolhida', value: dados.patente }
+      const unidademenu = new StringSelectMenuBuilder()
+        .setCustomId('selecionar_unidade')
+        .setPlaceholder('Escolha a unidade')
+        .addOptions(
+          Object.keys(UNIDADES).map(u => ({ label: u, value: u }))
         );
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`aprovar_${userId}`).setLabel('Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`negar_${userId}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
-      );
-
-      await canalAprovacao.send({ embeds: [embed], components: [row] });
-
-      return interaction.update({ content: '✅ **Formulário enviado com sucesso!** Seus dados e sua patente foram registrados e enviados para a DPMH.', components: [] });
+      return interaction.reply({
+        content: 'Selecione sua unidade.',
+        ephemeral: true,
+        components: [new ActionRowBuilder().addComponents(unidademenu)]
+      });
     }
 
-    // CONTROLE DE BOTOES DA STAFF (Aprovar / Negar)
-    if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
-      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não tem permissão para aprovar.', ephemeral: true });
+    // SELECIONOU UNIDADE
+    if (interaction.isStringSelectMenu() && interaction.customId === 'selecionar_unidade') {
+      const unidade = interaction.values[0];
+      const dados = registros.get(interaction.user.id);
+
+      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+
+      // VALIDAÇÃO ANTECIPADA: Bloqueia na hora se o código de incorporação estiver incorreto para a unidade
+      if (dados.codigo !== UNIDADES[unidade].codigo) {
+        return interaction.update({ content: '❌ **Envio cancelado:** Seu Código de Incorporação está incorreto para esta corporação!', components: [] });
       }
 
-      const userId = interaction.customId.split('_')[1];
-      const dados = registros.get(userId);
-      if (!dados) return interaction.reply({ content: 'Erro ao resgatar dados.', ephemeral: true });
-
-      try {
-        const membro = await interaction.guild.members.fetch(userId);
-        if (UNIDADES[dados.unidade]?.cargo) await membro.roles.add(UNIDADES[dados.unidade].cargo);
-        if (PATENTES[dados.patente]?.cargo) await membro.roles.add(PATENTES[dados.patente].cargo);
-
-        const nick = `${PATENTES[dados.patente].prefixo} ${dados.nome} | ${dados.rg}`;
-        await membro.setNickname(nick);
-      } catch (err) { console.error("Erro ao aplicar dados:", err); }
-
-      const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
-      if (canalAprovados) {
-        await canalAprovados.send({
-          embeds: [new EmbedBuilder().setColor('Green').setTitle('✅ Liberação Concluída').setDescription(`O policial <@${userId}> foi aprovado e integrado no sistema.`)]
-        });
-      }
-      return interaction.update({ content: `✅ Liberado por ${interaction.user}.`, components: [] });
-    }
-
-    if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
-      if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
-      const userId = interaction.customId.split('_')[1];
-      
-      registros.delete(userId);
+      dados.unidade = unidade;
       salvarRegistros();
 
-      return interaction.update({ content: `❌ Registro de <@${userId}> recusado por ${interaction.user}.`, components: [] });
-    }
-
-  } catch (error) {
-    console.error("Erro na execução geral:", error);
-  }
-});
-
-process.on('unhandledRejection', console.error);
-process.on('uncaughtException', console.error);
-
-client.login(process.env.TOKEN);
+      const lista = (unidade === 'PF' || unidade === 'PRF') ? PATENTES_
