@@ -92,7 +92,6 @@ const PATENTES_PF = [
 client.once(Events.ClientReady, async () => {
   console.log(`✅ ${client.user.tag} online`);
 
-  // Registra o comando /painel instantaneamente no seu servidor
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   try {
     console.log('🔄 Atualizando comandos / (slash) no servidor...');
@@ -112,14 +111,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
       if (interaction.commandName === 'painel') {
         const embed = new EmbedBuilder()
-          .setTitle('REGISTRO PARA INCORPORAÇÃO')
-          .setDescription(`Clique no botão abaixo para iniciar o registro.`);
+          .setTitle('🛡️ SISTEMA DE INCORPORAÇÃO POLICIAL')
+          .setDescription(`Seja bem-vindo ao departamento de cadastros.\n\nPara iniciar sua solicitação de incorporação e atualizar seus dados na corporação, clique no botão **Iniciar Registro** logo abaixo.`)
+          .setColor('#1d4ed8')
+          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+          .setFooter({ text: 'Departamento de Recursos Humanos', iconURL: client.user.avatarURL() })
+          .setTimestamp();
 
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId('abrir_registro')
-            .setLabel('Registro Policial')
+            .setLabel('Iniciar Registro')
             .setStyle(ButtonStyle.Primary)
+            .setEmoji('📝')
         );
 
         return interaction.reply({ embeds: [embed], components: [row] });
@@ -130,20 +134,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'abrir_registro') {
       const modal = new ModalBuilder()
         .setCustomId('modal_registro')
-        .setTitle('Registro Policial');
+        .setTitle('Ficha de Registro Policial');
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('nome').setLabel('Nome de Guerra').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Silva').setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('rg').setLabel('RG').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('rg').setLabel('Número do RG').setStyle(TextInputStyle.Short).setPlaceholder('Ex: 12345').setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('autorizacao').setLabel('Autorização').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('autorizacao').setLabel('Quem autorizou?').setStyle(TextInputStyle.Short).setPlaceholder('Ex: Cel. Roberto').setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short)
+          new TextInputBuilder().setCustomId('codigo').setLabel('Código de Incorporação').setStyle(TextInputStyle.Short).setPlaceholder('Insira o código da sua unidade').setRequired(true)
         )
       );
 
@@ -163,13 +167,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const unidadeMenu = new StringSelectMenuBuilder()
         .setCustomId('selecionar_unidade')
-        .setPlaceholder('Escolha a unidade')
+        .setPlaceholder('Escolha a sua Unidade Atendida...')
         .addOptions(
-          Object.keys(UNIDADES).map(u => ({ label: u, value: u }))
+          Object.keys(UNIDADES).map(u => ({ label: u, value: u, emoji: '🚓' }))
         );
 
       return interaction.reply({
-        content: 'Selecione sua unidade.',
+        content: '↳ **Etapa 2/3:** Selecione a sua corporação/unidade abaixo:',
         ephemeral: true,
         components: [new ActionRowBuilder().addComponents(unidadeMenu)]
       });
@@ -180,7 +184,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const unidade = interaction.values[0];
       const dados = registros.get(interaction.user.id);
 
-      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', ephemeral: true });
 
       dados.unidade = unidade;
       salvarRegistros();
@@ -189,13 +193,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const menuPatente = new StringSelectMenuBuilder()
         .setCustomId('selecionar_patente')
-        .setPlaceholder('Escolha a patente')
+        .setPlaceholder('Escolha a sua Patente/Cargo...')
         .addOptions(
-          lista.map(p => ({ label: p, value: p }))
+          lista.map(p => ({ label: p, value: p, emoji: '🎖️' }))
         );
 
       return interaction.update({
-        content: `Unidade: ${unidade}`,
+        content: `✅ Unidade selecionada: **${unidade}**\n↳ **Etapa 3/3:** Agora selecione sua respectiva patente abaixo:`,
         components: [new ActionRowBuilder().addComponents(menuPatente)]
       });
     }
@@ -205,19 +209,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const patente = interaction.values[0];
       const dados = registros.get(interaction.user.id);
 
-      if (!dados) return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados. Tente novamente.', ephemeral: true });
 
       dados.patente = patente;
       salvarRegistros();
 
       return interaction.update({
-        content: `Unidade: ${dados.unidade}\nPatente: ${patente}`,
+        content: `📋 **Tudo pronto!** Revise as informações principais:\n• Unidade: **${dados.unidade}**\n• Patente: **${patente}**\n\nClique no botão abaixo para despachar sua ficha para a banca avaliadora.`,
         components: [
           new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId('confirmar_registro')
-              .setLabel('Enviar Registro')
+              .setLabel('Enviar Ficha para Análise')
               .setStyle(ButtonStyle.Success)
+              .setEmoji('🚀')
           )
         ]
       });
@@ -228,48 +233,54 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const dados = registros.get(interaction.user.id);
 
       if (!dados) {
-        return interaction.reply({ content: 'Registro não encontrado.', ephemeral: true });
+        return interaction.reply({ content: '❌ Seus dados de registro não foram encontrados.', ephemeral: true });
       }
 
       if (dados.codigo !== UNIDADES[dados.unidade].codigo) {
-        return interaction.reply({ content: '❌ Código inválido.', ephemeral: true });
+        return interaction.reply({ content: '❌ **Código de Incorporação Inválido!** O código digitado não confere com a unidade selecionada.', ephemeral: true });
       }
 
       const canal = interaction.guild.channels.cache.get(CANAL_APROVACAO);
       if (!canal) {
-        return interaction.reply({ content: 'Canal de aprovação não encontrado.', ephemeral: true });
+        return interaction.reply({ content: '❌ Canal administrativo de aprovação não foi encontrado.', ephemeral: true });
       }
 
       const embed = new EmbedBuilder()
-        .setTitle('📋 Novo Registro')
+        .setTitle('⏳ AGUARDANDO APROVAÇÃO')
+        .setDescription(`Uma nova ficha de incorporação foi enviada e necessita de validação imediata.`)
+        .setColor('#eab308')
         .addFields(
-          { name: 'Nome', value: dados.nome },
-          { name: 'RG', value: dados.rg },
-          { name: 'Autorização', value: dados.autorizacao },
-          { name: 'Unidade', value: dados.unidade },
-          { name: 'Patente', value: dados.patente }
-        );
+          { name: '👤 Policial:', value: `<@${interaction.user.id}> (\`${interaction.user.id}\`)` },
+          { name: '🪪 Nome de Guerra:', value: dados.nome, inline: true },
+          { name: '📜 RG:', value: dados.rg, inline: true },
+          { name: '🔑 Autorizado por:', value: dados.autorizacao, inline: true },
+          { name: '🛡️ Unidade Destino:', value: dados.unidade, inline: true },
+          { name: '🎖️ Patente Solicitada:', value: dados.patente, inline: true }
+        )
+        .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: 'Aguardando decisão da staff' })
+        .setTimestamp();
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`aprovar_${interaction.user.id}`).setLabel('Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`negar_${interaction.user.id}`).setLabel('Negar').setStyle(ButtonStyle.Danger)
+        new ButtonBuilder().setCustomId(`aprovar_${interaction.user.id}`).setLabel('Aprovar Registro').setStyle(ButtonStyle.Success).setEmoji('✅'),
+        new ButtonBuilder().setCustomId(`negar_${interaction.user.id}`).setLabel('Recusar Registro').setStyle(ButtonStyle.Danger).setEmoji('❌')
       );
 
       await canal.send({ embeds: [embed], components: [row] });
 
-      return interaction.update({ content: '✅ Enviado para análise.', components: [] });
+      return interaction.update({ content: '✅ **Sua ficha foi enviada com sucesso!** Aguarde a avaliação dos Oficiais Superiores no canal correspondente.', components: [] });
     }
 
     // BOTÃO DE APROVAR
     if (interaction.isButton() && interaction.customId.startsWith('aprovar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não possui permissão.', ephemeral: true });
+        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para validar este registro.', ephemeral: true });
       }
 
       const userId = interaction.customId.split('_')[1];
       const dados = registros.get(userId);
 
-      if (!dados) return interaction.reply({ content: 'Dados do registro não encontrados.', ephemeral: true });
+      if (!dados) return interaction.reply({ content: '❌ Dados cadastrais limpos do cache ou inválidos.', ephemeral: true });
 
       try {
         const membro = await interaction.guild.members.fetch(userId);
@@ -285,29 +296,30 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const canalAprovados = interaction.guild.channels.cache.get(CANAL_APROVADOS);
       if (canalAprovados) {
-        await canalAprovados.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('Green')
-              .setTitle('✅ Registro Aprovado')
-              .addFields(
-                { name: 'Usuário', value: `<@${userId}>` },
-                { name: 'Nome', value: dados.nome },
-                { name: 'RG', value: dados.rg },
-                { name: 'Unidade', value: dados.unidade },
-                { name: 'Patente', value: dados.patente }
-              )
-          ]
-        });
+        const embedAprovado = new EmbedBuilder()
+          .setTitle('✅ CORPORAÇÃO ATUALIZADA - INCORPORADO')
+          .setColor('#22c55e')
+          .setDescription(`O cidadão cumpriu os pré-requisitos solicitados e agora faz parte oficialmente do departamento militar.`)
+          .addFields(
+            { name: '👤 Operador:', value: `<@${userId}>` },
+            { name: '🪪 Identidade (RG):', value: `\`${dados.rg}\``, inline: true },
+            { name: '🛡️ Corporação:', value: `**${dados.unidade}**`, inline: true },
+            { name: '🎖️ Patente/Cargo:', value: `\`${dados.patente}\``, inline: true }
+          )
+          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+          .setFooter({ text: `Aprovado por: ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp();
+
+        await canalAprovados.send({ embeds: [embedAprovado] });
       }
 
-      return interaction.update({ content: `✅ Registro de <@${userId}> aprovado por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `✅ O registro de <@${userId}> foi **aprovado** com sucesso por ${interaction.user}. Cargos e prefixo aplicados.`, components: [] });
     }
 
     // BOTÃO DE NEGAR
     if (interaction.isButton() && interaction.customId.startsWith('negar_')) {
       if (!interaction.member.roles.cache.has(CARGO_APROVADOR)) {
-        return interaction.reply({ content: '❌ Você não possui permissão.', ephemeral: true });
+        return interaction.reply({ content: '❌ Você não tem a atribuição necessária (Cargo de Aprovador) para recusar este registro.', ephemeral: true });
       }
 
       const userId = interaction.customId.split('_')[1];
@@ -315,24 +327,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const canalRecusados = interaction.guild.channels.cache.get(CANAL_RECUSADOS);
       if (canalRecusados && dados) {
-        await canalRecusados.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('Red')
-              .setTitle('❌ Registro Recusado')
-              .addFields(
-                { name: 'Usuário', value: `<@${userId}>` },
-                { name: 'Nome', value: dados.nome },
-                { name: 'RG', value: dados.rg }
-              )
-          ]
-        });
+        const embedRecusado = new EmbedBuilder()
+          .setTitle('❌ SOLICITAÇÃO RECUSADA')
+          .setColor('#ef4444')
+          .setDescription(`A ficha de incorporação enviada não atende aos parâmetros exigidos ou contém inconsistências nos dados informados.`)
+          .addFields(
+            { name: '👤 Candidato reprovado:', value: `<@${userId}>` },
+            { name: '🪪 Nome enviado:', value: dados.nome, inline: true },
+            { name: '📜 RG informado:', value: `\`${dados.rg}\``, inline: true }
+          )
+          .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+          .setFooter({ text: `Recusado por: ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp();
+
+        await canalRecusados.send({ embeds: [embedRecusado] });
       }
 
       registros.delete(userId);
       salvarRegistros();
 
-      return interaction.update({ content: `❌ Registro de <@${userId}> recusado por ${interaction.user}.`, components: [] });
+      return interaction.update({ content: `❌ O registro de <@${userId}> foi **recusado** por ${interaction.user} e os dados temporários foram expurgados.`, components: [] });
     }
 
   } catch (error) {
